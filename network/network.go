@@ -615,6 +615,15 @@ func (n *network) Dispatch() error {
 	go n.gossip()
 	for {
 		conn, err := n.listener.Accept()
+		switch conn := conn.(type) {
+		case *net.TCPConn:
+			if err := conn.SetLinger(0); err != nil {
+				n.log.Warn("failed to set no linger due to: %s", err)
+			}
+			if err := conn.SetNoDelay(true); err != nil {
+				n.log.Warn("failed to set socket nodelay due to: %s", err)
+			}
+		}
 		if err != nil {
 			if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
 				// Sleep for a small amount of time to try to wait for the
@@ -916,11 +925,14 @@ func (n *network) attemptConnect(ip utils.IPDesc) error {
 // assumes the stateLock is not held. Returns an error if the peer's connection
 // wasn't able to be upgraded.
 func (n *network) upgrade(p *peer, upgrader Upgrader) error {
+	p.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 	id, conn, err := upgrader.Upgrade(p.conn)
 	if err != nil {
+		_ = p.conn.Close()
 		n.log.Verbo("failed to upgrade connection with %s", err)
 		return err
 	}
+	p.conn.SetReadDeadline(time.Time{})
 	p.sender = make(chan []byte, n.sendQueueSize)
 	p.id = id
 	p.conn = conn
