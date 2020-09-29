@@ -47,6 +47,8 @@ const (
 	defaultGossipSize                                = 50
 	defaultPingPongTimeout                           = time.Minute
 	defaultPingFrequency                             = 3 * defaultPingPongTimeout / 4
+	defaultReadBufferSize                            = 16 * 1024
+	defaultReadHandshakeTimeout                      = 5 * time.Second
 )
 
 var (
@@ -128,6 +130,8 @@ type network struct {
 	gossipSize                         int
 	pingPongTimeout                    time.Duration
 	pingFrequency                      time.Duration
+	readBufferSize                     uint32
+	readHandshakeTimeout               time.Duration
 
 	executor timer.Executor
 
@@ -192,6 +196,8 @@ func NewDefaultNetwork(
 		defaultGossipSize,
 		defaultPingPongTimeout,
 		defaultPingFrequency,
+		defaultReadBufferSize,
+		defaultReadHandshakeTimeout,
 	)
 }
 
@@ -226,6 +232,8 @@ func NewNetwork(
 	gossipSize int,
 	pingPongTimeout time.Duration,
 	pingFrequency time.Duration,
+	readBufferSize uint32,
+	readHandshakeTimeout time.Duration,
 ) Network {
 	// #nosec G404
 	netw := &network{
@@ -266,6 +274,8 @@ func NewNetwork(
 		retryDelay:                         make(map[string]time.Duration),
 		myIPs:                              map[string]struct{}{ip.String(): {}},
 		peers:                              make(map[[20]byte]*peer),
+		readBufferSize:                     readBufferSize,
+		readHandshakeTimeout:               readHandshakeTimeout,
 	}
 	if err := netw.initialize(registerer); err != nil {
 		log.Warn("initializing network metrics failed with: %s", err)
@@ -925,7 +935,7 @@ func (n *network) attemptConnect(ip utils.IPDesc) error {
 // assumes the stateLock is not held. Returns an error if the peer's connection
 // wasn't able to be upgraded.
 func (n *network) upgrade(p *peer, upgrader Upgrader) error {
-	p.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	p.conn.SetReadDeadline(time.Now().Add(n.readHandshakeTimeout))
 	id, conn, err := upgrader.Upgrade(p.conn)
 	if err != nil {
 		_ = p.conn.Close()

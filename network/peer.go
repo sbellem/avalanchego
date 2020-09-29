@@ -129,7 +129,7 @@ func (p *peer) ReadMessages() {
 	}
 
 	pendingBuffer := wrappers.Packer{}
-	readBuffer := make([]byte, 16*1024)
+	readBuffer := make([]byte, p.net.readBufferSize)
 	for {
 		read, err := p.conn.Read(readBuffer)
 		if err != nil {
