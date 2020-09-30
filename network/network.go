@@ -625,15 +625,6 @@ func (n *network) Dispatch() error {
 	go n.gossip()
 	for {
 		conn, err := n.listener.Accept()
-		switch conn := conn.(type) {
-		case *net.TCPConn:
-			if err := conn.SetLinger(0); err != nil {
-				n.log.Warn("failed to set no linger due to: %s", err)
-			}
-			if err := conn.SetNoDelay(true); err != nil {
-				n.log.Warn("failed to set socket nodelay due to: %s", err)
-			}
-		}
 		if err != nil {
 			if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
 				// Sleep for a small amount of time to try to wait for the
@@ -644,6 +635,15 @@ func (n *network) Dispatch() error {
 
 			n.log.Debug("error during server accept: %s", err)
 			return err
+		}
+		switch conn := conn.(type) {
+		case *net.TCPConn:
+			if err := conn.SetLinger(0); err != nil {
+				n.log.Warn("failed to set no linger due to: %s", err)
+			}
+			if err := conn.SetNoDelay(true); err != nil {
+				n.log.Warn("failed to set socket nodelay due to: %s", err)
+			}
 		}
 		go n.upgrade(&peer{
 			net:  n,
