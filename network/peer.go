@@ -210,7 +210,7 @@ func (p *peer) WriteMessages() {
 		for len(msg) > 0 {
 			written, err := p.conn.Write(msg)
 			if err != nil {
-				p.net.log.Debug("error writing to %s at %s due to: %s", p.id, p.ip, err)
+				p.net.log.Verbo("error writing to %s at %s due to: %s", p.id, p.ip, err)
 				return
 			}
 			msg = msg[written:]
