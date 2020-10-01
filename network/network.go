@@ -48,7 +48,7 @@ const (
 	defaultPingPongTimeout                           = time.Minute
 	defaultPingFrequency                             = 3 * defaultPingPongTimeout / 4
 	defaultReadBufferSize                            = 16 * 1024
-	defaultReadHandshakeTimeout                      = 5 * time.Second
+	defaultReadHandshakeTimeout                      = 15 * time.Second
 )
 
 var (
