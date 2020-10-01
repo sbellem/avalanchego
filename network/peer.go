@@ -63,15 +63,21 @@ type peer struct {
 
 	// unix time of the last message sent and received respectively
 	lastSent, lastReceived int64
+
+	// ticker processes
+	tickerOnce sync.Once
 }
 
 // assume the stateLock is held
 func (p *peer) Start() {
-	go p.ReadMessages()
 	go p.WriteMessages()
 
 	// Initially send the version to the peer
 	go p.Version()
+}
+
+func (p *peer) StartTicker() {
+	go p.ReadMessages()
 	go p.requestFinishHandshake()
 	go p.sendPings()
 }
@@ -213,6 +219,7 @@ func (p *peer) WriteMessages() {
 				p.net.log.Verbo("error writing to %s at %s due to: %s", p.id, p.ip, err)
 				return
 			}
+			p.tickerOnce.Do(func() { p.StartTicker() })
 			msg = msg[written:]
 		}
 		atomic.StoreInt64(&p.lastSent, p.net.clock.Time().Unix())
