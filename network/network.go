@@ -942,7 +942,7 @@ func (n *network) upgrade(p *peer, upgrader Upgrader) error {
 		n.log.Verbo("failed to upgrade connection with %s", err)
 		return err
 	}
-	p.conn.SetReadDeadline(time.Time{})
+	conn.SetReadDeadline(time.Time{})
 	p.sender = make(chan []byte, n.sendQueueSize)
 	p.id = id
 	p.conn = conn
