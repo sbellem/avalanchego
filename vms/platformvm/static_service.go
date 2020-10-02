@@ -36,10 +36,10 @@ type StaticService struct{}
 
 // APIUTXO is a UTXO on the Platform Chain that exists at the chain's genesis.
 type APIUTXO struct {
-	Locktime json.Uint64     `json:"locktime"`
-	Amount   json.Uint64     `json:"amount"`
-	Address  string          `json:"address"`
-	Message  formatting.CB58 `json:"message"`
+	Locktime json.Uint64        `json:"locktime"`
+	Amount   json.Uint64        `json:"amount"`
+	Address  string             `json:"address"`
+	Message  formatting.HexCB58 `json:"message"`
 }
 
 // APIStaker is the representation of a staker sent via APIs.
@@ -103,11 +103,11 @@ func (v *APIStaker) weight() uint64 {
 // [Name] is a human-readable, non-unique name for the chain.
 // [SubnetID] is the ID of the subnet that validates the chain
 type APIChain struct {
-	GenesisData formatting.CB58 `json:"genesisData"`
-	VMID        ids.ID          `json:"vmID"`
-	FxIDs       []ids.ID        `json:"fxIDs"`
-	Name        string          `json:"name"`
-	SubnetID    ids.ID          `json:"subnetID"`
+	GenesisData formatting.HexCB58 `json:"genesisData"`
+	VMID        ids.ID             `json:"vmID"`
+	FxIDs       []ids.ID           `json:"fxIDs"`
+	Name        string             `json:"name"`
+	SubnetID    ids.ID             `json:"subnetID"`
 }
 
 // BuildGenesisArgs are the arguments used to create
@@ -126,11 +126,12 @@ type BuildGenesisArgs struct {
 	Time          json.Uint64           `json:"time"`
 	InitialSupply json.Uint64           `json:"initialSupply"`
 	Message       string                `json:"message"`
+	Hex           bool                  `json:"hex"`
 }
 
 // BuildGenesisReply is the reply from BuildGenesis
 type BuildGenesisReply struct {
-	Bytes formatting.CB58 `json:"bytes"`
+	Bytes formatting.HexCB58 `json:"bytes"`
 }
 
 // GenesisUTXO adds messages to UTXOs
@@ -340,6 +341,7 @@ func (ss *StaticService) BuildGenesis(_ *http.Request, args *BuildGenesisArgs, r
 	// Marshal genesis to bytes
 	bytes, err := GenesisCodec.Marshal(genesis)
 	reply.Bytes.Bytes = bytes
+	reply.Bytes.Hex = args.Hex
 	return err
 }
 

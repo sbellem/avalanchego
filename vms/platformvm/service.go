@@ -345,11 +345,13 @@ type Index struct {
 // If [StartIndex] is omitted, gets all UTXOs.
 // If GetUTXOs is called multiple times, with our without [StartIndex], it is not guaranteed
 // that returned UTXOs are unique. That is, the same UTXO may appear in the response of multiple calls.
+// If [Hex] is true, then the UTXOs will be returned in hex format with a 4 byte checksum
 type GetUTXOsArgs struct {
 	Addresses   []string    `json:"addresses"`
 	SourceChain string      `json:"sourceChain"`
 	Limit       json.Uint32 `json:"limit"`
 	StartIndex  Index       `json:"startIndex"`
+	Hex         bool        `json:"hex"`
 }
 
 // GetUTXOsResponse defines the GetUTXOs replies returned from the API
@@ -357,7 +359,7 @@ type GetUTXOsResponse struct {
 	// Number of UTXOs returned
 	NumFetched json.Uint64 `json:"numFetched"`
 	// The UTXOs
-	UTXOs []formatting.CB58 `json:"utxos"`
+	UTXOs []formatting.HexCB58 `json:"utxos"`
 	// The last UTXO that was returned, and the address it corresponds to.
 	// Used for pagination. To get the rest of the UTXOs, call GetUTXOs
 	// again and set [StartIndex] to this value.
@@ -438,13 +440,13 @@ func (service *Service) GetUTXOs(_ *http.Request, args *GetUTXOsArgs, response *
 		return fmt.Errorf("problem retrieving UTXOs: %w", err)
 	}
 
-	response.UTXOs = make([]formatting.CB58, len(utxos))
+	response.UTXOs = make([]formatting.HexCB58, len(utxos))
 	for i, utxo := range utxos {
 		bytes, err := service.vm.codec.Marshal(utxo)
 		if err != nil {
 			return fmt.Errorf("couldn't serialize UTXO %q: %w", utxo.InputID(), err)
 		}
-		response.UTXOs[i] = formatting.CB58{Bytes: bytes}
+		response.UTXOs[i] = formatting.HexCB58{Bytes: bytes, Hex: args.Hex}
 	}
 
 	endAddress, err := service.vm.FormatLocalAddress(endAddr)
@@ -1561,7 +1563,7 @@ type CreateBlockchainArgs struct {
 	// Human-readable name for the new blockchain, not necessarily unique
 	Name string `json:"name"`
 	// Genesis state of the blockchain being created
-	GenesisData formatting.CB58 `json:"genesisData"`
+	GenesisData formatting.HexCB58 `json:"genesisData"`
 }
 
 // CreateBlockchain issues a transaction to create a new blockchain
@@ -1842,7 +1844,7 @@ func (service *Service) GetBlockchains(_ *http.Request, args *struct{}, response
 // IssueTxArgs ...
 type IssueTxArgs struct {
 	// Raw byte representation of the transaction
-	Tx formatting.CB58 `json:"tx"`
+	Tx formatting.HexCB58 `json:"tx"`
 }
 
 // IssueTxResponse ...
@@ -1866,25 +1868,21 @@ func (service *Service) IssueTx(_ *http.Request, args *IssueTxArgs, response *Is
 	return nil
 }
 
-// GetTxArgs ...
-type GetTxArgs struct {
-	TxID ids.ID `json:"txID"`
-}
-
 // GetTxResponse ...
 type GetTxResponse struct {
 	// Raw byte representation of the transaction
-	Tx formatting.CB58 `json:"tx"`
+	Tx formatting.HexCB58 `json:"tx"`
 }
 
 // GetTx gets a tx
-func (service *Service) GetTx(_ *http.Request, args *GetTxArgs, response *GetTxResponse) error {
+func (service *Service) GetTx(_ *http.Request, args *api.GetTxArgs, response *GetTxResponse) error {
 	service.vm.Ctx.Log.Info("Platform: GetTx called")
 	txBytes, err := service.vm.getTx(service.vm.DB, args.TxID)
 	if err != nil {
 		return fmt.Errorf("couldn't get tx: %w", err)
 	}
 	response.Tx.Bytes = txBytes
+	response.Tx.Hex = args.Hex
 	return nil
 }
 

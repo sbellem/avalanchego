@@ -31,6 +31,7 @@ type StaticService struct{}
 type BuildGenesisArgs struct {
 	NetworkID   cjson.Uint32               `json:"networkID"`
 	GenesisData map[string]AssetDefinition `json:"genesisData"`
+	Hex         bool                       `json:"hex"`
 }
 
 // AssetDefinition ...
@@ -39,12 +40,12 @@ type AssetDefinition struct {
 	Symbol       string                   `json:"symbol"`
 	Denomination cjson.Uint8              `json:"denomination"`
 	InitialState map[string][]interface{} `json:"initialState"`
-	Memo         formatting.CB58          `json:"memo"`
+	Memo         formatting.HexCB58       `json:"memo"`
 }
 
 // BuildGenesisReply is the reply from BuildGenesis
 type BuildGenesisReply struct {
-	Bytes formatting.CB58 `json:"bytes"`
+	Bytes formatting.HexCB58 `json:"bytes"`
 }
 
 // BuildGenesis returns the UTXOs such that at least one address in [args.Addresses] is
@@ -165,5 +166,6 @@ func (ss *StaticService) BuildGenesis(_ *http.Request, args *BuildGenesisArgs, r
 	}
 
 	reply.Bytes.Bytes = b
+	reply.Bytes.Hex = args.Hex
 	return nil
 }

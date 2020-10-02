@@ -131,7 +131,7 @@ func FromConfig(config *Config) ([]byte, ids.ID, error) {
 						Locktime: json.Uint64(unlock.Locktime),
 						Amount:   json.Uint64(unlock.Amount),
 						Address:  addr,
-						Message:  formatting.CB58{Bytes: allocation.ETHAddr.Bytes()},
+						Message:  formatting.HexCB58{Bytes: allocation.ETHAddr.Bytes()},
 					},
 				)
 				amount += unlock.Amount
@@ -163,7 +163,7 @@ func FromConfig(config *Config) ([]byte, ids.ID, error) {
 					Locktime: json.Uint64(unlock.Locktime),
 					Amount:   json.Uint64(unlock.Amount),
 					Address:  addr,
-					Message:  formatting.CB58{Bytes: allocation.ETHAddr.Bytes()},
+					Message:  formatting.HexCB58{Bytes: allocation.ETHAddr.Bytes()},
 				})
 				amount += unlock.Amount
 			}
@@ -202,7 +202,7 @@ func FromConfig(config *Config) ([]byte, ids.ID, error) {
 			Name: "X-Chain",
 		},
 		{
-			GenesisData: formatting.CB58{Bytes: []byte(config.CChainGenesis)},
+			GenesisData: formatting.HexCB58{Bytes: []byte(config.CChainGenesis)},
 			SubnetID:    constants.PrimaryNetworkID,
 			VMID:        EVMID,
 			Name:        "C-Chain",

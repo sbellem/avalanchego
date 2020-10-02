@@ -54,7 +54,7 @@ type Service struct{ vm *VM }
 
 // FormattedTx defines a JSON formatted struct containing a Tx in CB58 format
 type FormattedTx struct {
-	Tx formatting.CB58 `json:"tx"`
+	Tx formatting.HexCB58 `json:"tx"`
 }
 
 // FormattedAssetID defines a JSON formatted struct containing an assetID as a string
@@ -98,7 +98,7 @@ func (service *Service) GetTxStatus(r *http.Request, args *api.JsonTxID, reply *
 }
 
 // GetTx returns the specified transaction
-func (service *Service) GetTx(r *http.Request, args *api.JsonTxID, reply *FormattedTx) error {
+func (service *Service) GetTx(r *http.Request, args *api.GetTxArgs, reply *FormattedTx) error {
 	service.vm.ctx.Log.Info("AVM: GetTx called with %s", args.TxID)
 
 	if args.TxID.IsZero() {
@@ -114,6 +114,7 @@ func (service *Service) GetTx(r *http.Request, args *api.JsonTxID, reply *Format
 	}
 
 	reply.Tx.Bytes = tx.Bytes()
+	reply.Tx.Hex = args.Hex
 	return nil
 }
 
@@ -141,6 +142,7 @@ type GetUTXOsArgs struct {
 	SourceChain string      `json:"sourceChain"`
 	Limit       json.Uint32 `json:"limit"`
 	StartIndex  Index       `json:"startIndex"`
+	Hex         bool        `json:"hex"`
 }
 
 // GetUTXOsReply defines the GetUTXOs replies returned from the API
@@ -148,7 +150,7 @@ type GetUTXOsReply struct {
 	// Number of UTXOs returned
 	NumFetched json.Uint64 `json:"numFetched"`
 	// The UTXOs
-	UTXOs []formatting.CB58 `json:"utxos"`
+	UTXOs []formatting.HexCB58 `json:"utxos"`
 	// The last UTXO that was returned, and the address it corresponds to.
 	// Used for pagination. To get the rest of the UTXOs, call GetUTXOs
 	// again and set [StartIndex] to this value.
@@ -228,13 +230,13 @@ func (service *Service) GetUTXOs(r *http.Request, args *GetUTXOsArgs, reply *Get
 		return fmt.Errorf("problem retrieving UTXOs: %w", err)
 	}
 
-	reply.UTXOs = make([]formatting.CB58, len(utxos))
+	reply.UTXOs = make([]formatting.HexCB58, len(utxos))
 	for i, utxo := range utxos {
 		b, err := service.vm.codec.Marshal(utxo)
 		if err != nil {
 			return fmt.Errorf("problem marshalling UTXO: %w", err)
 		}
-		reply.UTXOs[i] = formatting.CB58{Bytes: b}
+		reply.UTXOs[i] = formatting.HexCB58{Bytes: b, Hex: args.Hex}
 	}
 
 	endAddress, err := service.vm.FormatLocalAddress(endAddr)
@@ -1414,10 +1416,10 @@ func (service *Service) SendNFT(r *http.Request, args *SendNFTArgs, reply *api.J
 
 // MintNFTArgs are arguments for passing into MintNFT requests
 type MintNFTArgs struct {
-	api.JsonSpendHeader                 // User, password, from addrs, change addr
-	AssetID             string          `json:"assetID"`
-	Payload             formatting.CB58 `json:"payload"`
-	To                  string          `json:"to"`
+	api.JsonSpendHeader                    // User, password, from addrs, change addr
+	AssetID             string             `json:"assetID"`
+	Payload             formatting.HexCB58 `json:"payload"`
+	To                  string             `json:"to"`
 }
 
 // MintNFT issues a MintNFT transaction and returns the ID of the newly created transaction

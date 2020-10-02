@@ -165,7 +165,7 @@ func TestServiceIssueTx(t *testing.T) {
 	}
 
 	tx := NewTx(t, genesisBytes, vm)
-	txArgs.Tx = formatting.CB58{Bytes: tx.Bytes()}
+	txArgs.Tx = formatting.HexCB58{Bytes: tx.Bytes()}
 	txReply = &api.JsonTxID{}
 	if err := s.IssueTx(nil, txArgs, txReply); err != nil {
 		t.Fatal(err)
@@ -201,7 +201,7 @@ func TestServiceGetTxStatus(t *testing.T) {
 		)
 	}
 
-	txArgs := &FormattedTx{Tx: formatting.CB58{Bytes: tx.Bytes()}}
+	txArgs := &FormattedTx{Tx: formatting.HexCB58{Bytes: tx.Bytes()}}
 	txReply := &api.JsonTxID{}
 	if err := s.IssueTx(nil, txArgs, txReply); err != nil {
 		t.Fatal(err)
@@ -289,7 +289,7 @@ func TestServiceGetTx(t *testing.T) {
 	txID := genesisTx.ID()
 
 	reply := FormattedTx{}
-	err := s.GetTx(nil, &api.JsonTxID{
+	err := s.GetTx(nil, &api.GetTxArgs{
 		TxID: txID,
 	}, &reply)
 	assert.NoError(t, err)
@@ -304,7 +304,7 @@ func TestServiceGetNilTx(t *testing.T) {
 	}()
 
 	reply := FormattedTx{}
-	err := s.GetTx(nil, &api.JsonTxID{}, &reply)
+	err := s.GetTx(nil, &api.GetTxArgs{}, &reply)
 	assert.Error(t, err, "Nil TxID should have returned an error")
 }
 
@@ -316,7 +316,7 @@ func TestServiceGetUnknownTx(t *testing.T) {
 	}()
 
 	reply := FormattedTx{}
-	err := s.GetTx(nil, &api.JsonTxID{TxID: ids.Empty}, &reply)
+	err := s.GetTx(nil, &api.GetTxArgs{TxID: ids.Empty}, &reply)
 	assert.Error(t, err, "Unknown TxID should have returned an error")
 }
 
@@ -863,7 +863,7 @@ func TestNFTWorkflow(t *testing.T) {
 			JsonChangeAddr: api.JsonChangeAddr{ChangeAddr: changeAddrStr},
 		},
 		AssetID: assetID.String(),
-		Payload: formatting.CB58{Bytes: []byte{1, 2, 3, 4, 5}},
+		Payload: formatting.HexCB58{Bytes: []byte{1, 2, 3, 4, 5}},
 		To:      addrStr,
 	}
 	mintReply := &api.JsonTxIDChangeAddr{}

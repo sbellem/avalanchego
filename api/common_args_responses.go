@@ -55,3 +55,9 @@ type JsonSpendHeader struct {
 	JsonFromAddrs
 	JsonChangeAddr
 }
+
+// GetTxArgs ...
+type GetTxArgs struct {
+	TxID ids.ID `json:"txID"`
+	Hex  bool   `json:"hex"`
+}

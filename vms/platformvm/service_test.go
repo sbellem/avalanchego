@@ -273,7 +273,7 @@ func TestGetTx(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed test '%s': %s", test.description, err)
 		}
-		arg := &GetTxArgs{TxID: tx.ID()}
+		arg := &api.GetTxArgs{TxID: tx.ID()}
 		var response GetTxResponse
 		if err := service.GetTx(nil, arg, &response); err == nil {
 			t.Fatalf("failed test '%s': haven't issued tx yet so shouldn't be able to get it", test.description)

@@ -44,6 +44,7 @@ func (h *HexCB58) FromString(str string) error {
 	var err error
 	if strings.HasPrefix(str, "0x") {
 		rawBytes, err = hexFromString(str)
+		h.Hex = true
 	} else {
 		rawBytes, err = cb58FromString(str)
 	}
