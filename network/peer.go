@@ -219,7 +219,7 @@ func (p *peer) WriteMessages() {
 				p.net.log.Verbo("error writing to %s at %s due to: %s", p.id, p.ip, err)
 				return
 			}
-			p.tickerOnce.Do(func() { p.StartTicker() })
+			p.tickerOnce.Do(p.StartTicker)
 			msg = msg[written:]
 		}
 		atomic.StoreInt64(&p.lastSent, p.net.clock.Time().Unix())
