@@ -25,13 +25,22 @@ var (
 )
 
 // StaticService defines the base service for the asset vm
-type StaticService struct{}
+type StaticService struct{ encodingManager formatting.EncodingManager }
+
+// CreateStaticService ...
+func CreateStaticService(defaultEnc string) (StaticService, error) {
+	encodingManager, err := formatting.NewEncodingManager(defaultEnc)
+	if err != nil {
+		return StaticService{}, err
+	}
+	return StaticService{encodingManager: encodingManager}, nil
+}
 
 // BuildGenesisArgs are arguments for BuildGenesis
 type BuildGenesisArgs struct {
 	NetworkID   cjson.Uint32               `json:"networkID"`
 	GenesisData map[string]AssetDefinition `json:"genesisData"`
-	Hex         bool                       `json:"hex"`
+	Encoding    string                     `json:"string"`
 }
 
 // AssetDefinition ...
@@ -40,12 +49,13 @@ type AssetDefinition struct {
 	Symbol       string                   `json:"symbol"`
 	Denomination cjson.Uint8              `json:"denomination"`
 	InitialState map[string][]interface{} `json:"initialState"`
-	Memo         formatting.HexCB58       `json:"memo"`
+	Memo         string                   `json:"memo"`
 }
 
 // BuildGenesisReply is the reply from BuildGenesis
 type BuildGenesisReply struct {
-	Bytes formatting.HexCB58 `json:"bytes"`
+	Bytes    string `json:"bytes"`
+	Encoding string `json:"encoding"`
 }
 
 // BuildGenesis returns the UTXOs such that at least one address in [args.Addresses] is
@@ -70,15 +80,24 @@ func (ss *StaticService) BuildGenesis(_ *http.Request, args *BuildGenesisArgs, r
 		return errs.Err
 	}
 
+	encoding, err := ss.encodingManager.GetEncoding(args.Encoding)
+	if err != nil {
+		return fmt.Errorf("problem getting %s encoding format: %w", args.Encoding, err)
+	}
+
 	g := Genesis{}
 	for assetAlias, assetDefinition := range args.GenesisData {
+		assetMemo, err := encoding.ConvertString(assetDefinition.Memo)
+		if err != nil {
+			return fmt.Errorf("problem formatting asset definition memo due to: %w", err)
+		}
 		asset := GenesisAsset{
 			Alias: assetAlias,
 			CreateAssetTx: CreateAssetTx{
 				BaseTx: BaseTx{BaseTx: avax.BaseTx{
 					NetworkID:    uint32(args.NetworkID),
 					BlockchainID: ids.Empty,
-					Memo:         assetDefinition.Memo.Bytes,
+					Memo:         assetMemo,
 				}},
 				Name:         assetDefinition.Name,
 				Symbol:       assetDefinition.Symbol,
@@ -165,7 +184,7 @@ func (ss *StaticService) BuildGenesis(_ *http.Request, args *BuildGenesisArgs, r
 		return fmt.Errorf("problem marshaling genesis: %w", err)
 	}
 
-	reply.Bytes.Bytes = b
-	reply.Bytes.Hex = args.Hex
+	reply.Bytes = encoding.ConvertBytes(b)
+	reply.Encoding = encoding.Encoding()
 	return nil
 }
