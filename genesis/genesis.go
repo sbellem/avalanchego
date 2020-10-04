@@ -47,11 +47,11 @@ func FromConfig(config *Config) ([]byte, ids.ID, error) {
 
 	amount := uint64(0)
 
-	encoding := formatting.CB58{}
+	encoding := formatting.Hex{}
 	// Specify the genesis state of the AVM
 	avmArgs := avm.BuildGenesisArgs{
 		NetworkID: json.Uint32(config.NetworkID),
-		Encoding:  formatting.CB58Encoding,
+		Encoding:  formatting.HexEncoding,
 	}
 	{
 		avax := avm.AssetDefinition{
@@ -91,7 +91,7 @@ func FromConfig(config *Config) ([]byte, ids.ID, error) {
 	}
 	avmReply := avm.BuildGenesisReply{}
 
-	avmSS, err := avm.CreateStaticService(formatting.CB58Encoding)
+	avmSS, err := avm.CreateStaticService(formatting.HexEncoding)
 	if err != nil {
 		return nil, ids.ID{}, fmt.Errorf("problem creating avm Static Service: %w", err)
 	}
@@ -142,7 +142,7 @@ func FromConfig(config *Config) ([]byte, ids.ID, error) {
 						Locktime: json.Uint64(unlock.Locktime),
 						Amount:   json.Uint64(unlock.Amount),
 						Address:  addr,
-						Message:  formatting.CB58{Bytes: allocation.ETHAddr.Bytes()}.String(),
+						Message:  formatting.Hex{Bytes: allocation.ETHAddr.Bytes()}.String(),
 					},
 				)
 				amount += unlock.Amount
@@ -174,7 +174,7 @@ func FromConfig(config *Config) ([]byte, ids.ID, error) {
 					Locktime: json.Uint64(unlock.Locktime),
 					Amount:   json.Uint64(unlock.Amount),
 					Address:  addr,
-					Message:  formatting.CB58{Bytes: allocation.ETHAddr.Bytes()}.String(),
+					Message:  formatting.Hex{Bytes: allocation.ETHAddr.Bytes()}.String(),
 				})
 				amount += unlock.Amount
 			}
@@ -213,7 +213,7 @@ func FromConfig(config *Config) ([]byte, ids.ID, error) {
 			Name: "X-Chain",
 		},
 		{
-			GenesisData: formatting.CB58{Bytes: []byte(config.CChainGenesis)}.String(),
+			GenesisData: formatting.Hex{Bytes: []byte(config.CChainGenesis)}.String(),
 			SubnetID:    constants.PrimaryNetworkID,
 			VMID:        EVMID,
 			Name:        "C-Chain",
@@ -221,7 +221,7 @@ func FromConfig(config *Config) ([]byte, ids.ID, error) {
 	}
 
 	platformvmReply := platformvm.BuildGenesisReply{}
-	platformvmSS, err := platformvm.CreateStaticService(formatting.CB58Encoding)
+	platformvmSS, err := platformvm.CreateStaticService(formatting.HexEncoding)
 	if err != nil {
 		return nil, ids.ID{}, fmt.Errorf("problem creating platformvm Static Service: %w", err)
 	}
